@@ -8,7 +8,7 @@ fn main() {
 
 fn app(cx: Scope) -> Element {
     render! {
-        h1 { "Hello world!" }
-        b { "" }
+        h1 { "Titrationskurve" }
+        b { "Hello world!" }
     }
 }

@@ -1,14 +1,24 @@
+//! # Notes
+//!
+//! pH = 1/2 * (pKs - lg(0.1))
+
 pub struct Input {
-    /// Maßlösung Volumen
+    /// Measured solution volume
     pub m_v: f64,
-    /// Maßlösung Konzentration
+    /// Measured solution concentration
     pub m_c: f64,
-    /// Probelösung Volumen
+    /// Test solution volume
     pub p_v: f64,
-    /// Probelösung Konzentration
+    /// Test solution concentration
     pub p_c: f64,
-    /// pKs Wert (aus Datenbank, mit Namen)
+    /// pKs (from database, by name)
     pub pks: f64,
-    /// pKg Wert (aus Datenbank, mit Namen)
+    /// pKg (from databse, by name)
     pub pkg: f64,
+}
+
+pub struct Output {
+    /// (V, V_total)
+    pub v_total: Vec<(f64, f64)>,
+    pub ph: Vec<f64>,
 }

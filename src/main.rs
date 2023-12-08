@@ -15,7 +15,6 @@ fn main() {
 fn App(cx: Scope) -> Element {
     render! {
         style { include_str!("./style.css") }
-        h1 { "Titrationskurve" }
         Diagram {}
     }
 }
@@ -24,13 +23,18 @@ fn Diagram(cx: Scope) -> Element {
     render! {
         svg {
             class: "frame",
-            view_box: "0 0 120 120",
-            rect {
+            view_box: "0 0 400 300",
+            polyline {
+                class: "diagram-axis",
+                points: "20,20 20,280 380,280",
+                // fill: "none",
+                // stroke: "white",
+            }
+            text {
+                class: "diagram-text",
                 x: 0,
-                y: 0,
-                width: 20,
-                height: 20,
-                fill: "green"
+                y: 150,
+                "pH"
             }
         }
     }

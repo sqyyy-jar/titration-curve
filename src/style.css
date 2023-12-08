@@ -1,3 +1,13 @@
-svg.frame {
-    background-color: blue;
+.frame {
+    background-color: #202020;
+}
+
+.diagram-axis {
+    fill: none;
+    stroke: white;
+}
+
+.diagram-text {
+    fill: white;
+    font: 13px sans-serif;
 }

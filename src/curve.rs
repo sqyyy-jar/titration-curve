@@ -17,8 +17,20 @@ pub struct Input {
     pub pkg: f64,
 }
 
+#[derive(PartialEq)]
 pub struct Output {
     /// (V, V_total)
-    pub v_total: Vec<(f64, f64)>,
+    pub v_total: Vec<f64>,
+    /// pH
     pub ph: Vec<f64>,
+}
+
+impl Output {
+    pub fn max_v(&self) -> f64 {
+        self.v_total
+            .iter()
+            .copied()
+            .reduce(f64::max)
+            .unwrap_or(25.0)
+    }
 }

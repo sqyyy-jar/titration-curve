@@ -49,7 +49,7 @@ fn Diagram(cx: Scope, data: Rc<Output>) -> Element {
     let x_steps = (max / DIAGRAM_X_GAPS).ceil() as usize;
     let scale = (
         DIAGRAM_WIDTH / DIAGRAM_X_GAPS / x_steps as f64,
-        DIAGRAM_HEIGHT / 15.0,
+        DIAGRAM_HEIGHT / 14.0,
     );
     render! {
         svg {
@@ -128,6 +128,17 @@ fn DiagramFrame(cx: Scope, x_steps: usize) -> Element {
 #[component]
 fn DiagramGraph(cx: Scope, data: Rc<Output>, scale: (f64, f64)) -> Element {
     render! {
+        // Draw lines between points
+        for (phs, vs) in data.ph.windows(2).zip(data.v_total.windows(2)) {
+            line {
+                stroke: "limegreen",
+                x1: DIAGRAM_LEFT + vs[0] * scale.0,
+                y1: DIAGRAM_BOTTOM - phs[0] * scale.1,
+                x2: DIAGRAM_LEFT + vs[1] * scale.0,
+                y2: DIAGRAM_BOTTOM - phs[1] * scale.1,
+            }
+        }
+        // Points
         for (ph, v) in data.ph.iter().zip(data.v_total.iter()) {
             circle {
                 fill: "cyan",

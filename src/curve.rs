@@ -1,25 +1,30 @@
 //! # Notes
 //!
-//! pH = 1/2 * (pKs - lg(0.1))
+//! ```txt
+//! pH = -lg(c(H3O+))
+//! c(H3O+) = n(H3O+) / Vtotal
+//! n(H3O+) =
+//! Vtotal = Vm + Vp
+//! ```
 
 pub struct Input {
-    /// Measured solution volume
-    pub m_v: f64,
-    /// Measured solution concentration
-    pub m_c: f64,
     /// Test solution volume
     pub p_v: f64,
     /// Test solution concentration
     pub p_c: f64,
-    /// pKs (from database, by name)
-    pub pks: f64,
-    /// pKg (from databse, by name)
-    pub pkg: f64,
+    /// Measuring solution concentration
+    pub m_c: f64,
+    /// Measuring solution volumes
+    pub m_vs: Vec<f64>,
+    // /// pKs (from database, by name)
+    // pub pks: f64,
+    // /// pKg (from databse, by name)
+    // pub pkg: f64,
 }
 
 #[derive(PartialEq)]
 pub struct Output {
-    /// (V, V_total)
+    /// Vtotal
     pub v_total: Vec<f64>,
     /// pH
     pub ph: Vec<f64>,

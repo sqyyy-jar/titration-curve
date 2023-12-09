@@ -4,15 +4,23 @@ pub mod curve;
 
 use std::rc::Rc;
 
+use calamine::{open_workbook, Reader, Xlsx};
 use curve::Output;
 use dioxus::prelude::*;
 use dioxus_desktop::{Config, WindowBuilder};
 
 fn main() {
+    test();
     dioxus_desktop::launch_cfg(
         App,
         Config::new().with_window(WindowBuilder::new().with_title("Titrationskurve")),
     );
+}
+
+fn test() {
+    let mut workbook: Xlsx<_> = open_workbook("table.xlsx").unwrap();
+    let range = workbook.worksheet_range_at(0).unwrap().unwrap();
+    println!("{range:?}");
 }
 
 fn App(cx: Scope) -> Element {

@@ -3,6 +3,9 @@
     background-color: #202020;
 }
 
+/* Diagram background */
+.diagram-background {}
+
 /* Line of the diagram grid */
 .diagram-grid {
     stroke: #808080;

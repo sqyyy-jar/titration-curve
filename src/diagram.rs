@@ -27,25 +27,29 @@ pub fn Diagram(cx: Scope, data: Rc<Output>) -> Element {
     );
     render! {
         svg {
-            display: "none",
-        }
-        svg {
             class: "diagram",
             view_box: "0 0 {DIAGRAM_FRAME_WIDTH} {DIAGRAM_FRAME_HEIGHT}",
-            defs {
-                linearGradient {
-                    id: "ph-gradient",
-                    x1: 0,
-                    y1: 1,
-                    x2: 0,
-                    y2: 0,
-                    stop { stop_color: "red", offset: "0%" }
-                    stop { stop_color: "yellow", offset: "50%" }
-                    stop { stop_color: "green", offset: "100%" }
-                }
-            }
+            DiagramPhGradient {},
             DiagramFrame { x_steps: x_steps }
             DiagramGraph { data: data.clone(), scale: scale }
+        }
+    }
+}
+
+#[component]
+fn DiagramPhGradient(cx: Scope) -> Element {
+    render! {
+        defs {
+            linearGradient {
+                id: "ph-gradient",
+                x1: 0,
+                y1: 1,
+                x2: 0,
+                y2: 0,
+                stop { stop_color: "red", offset: "0%" }
+                stop { stop_color: "yellow", offset: "50%" }
+                stop { stop_color: "green", offset: "100%" }
+            }
         }
     }
 }
@@ -117,20 +121,15 @@ fn DiagramFrame(cx: Scope, x_steps: usize) -> Element {
             points: "{DIAGRAM_MARGIN},{DIAGRAM_MARGIN} {DIAGRAM_MARGIN},{DIAGRAM_BOTTOM} {DIAGRAM_RIGHT},{DIAGRAM_BOTTOM}",
         }
         text {
-            class: "diagram-axis-number anchor-middle", // todo
+            class: "diagram-text anchor-middle", // todo
             x: DIAGRAM_RIGHT + 10.0,
             y: DIAGRAM_TOP + DIAGRAM_HEIGHT / 2.0,
-            // x: DIAGRAM_LEFT - 20.0,
-            // y: DIAGRAM_TOP + DIAGRAM_HEIGHT / 2.0,
-            // transform: "translate({DIAGRAM_LEFT - 20.0}, {DIAGRAM_TOP + DIAGRAM_HEIGHT / 2.0}) rotate(270)",
             "pH"
         }
         text {
-            class: "diagram-axis-number anchor-middle", // todo
+            class: "diagram-text anchor-middle", // todo
             x: DIAGRAM_LEFT + DIAGRAM_WIDTH / 2.0,
             y: DIAGRAM_TOP - 10.0,
-            // x: DIAGRAM_LEFT + DIAGRAM_WIDTH / 2.0,
-            // y: DIAGRAM_BOTTOM + 20.0,
             "Volumen"
         }
     }

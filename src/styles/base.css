@@ -18,7 +18,8 @@
 
 /* Text in the diagram */
 .diagram-text {
-    font: 13px sans-serif;
+    font: 10px sans-serif;
+    dominant-baseline: middle;
 }
 
 /* Numbers on the axis */

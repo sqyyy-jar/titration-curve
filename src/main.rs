@@ -2,6 +2,7 @@
 
 pub mod curve;
 pub mod diagram;
+pub mod themes;
 
 use std::rc::Rc;
 
@@ -9,15 +10,12 @@ use calamine::{open_workbook, Reader, Xlsx};
 use curve::Output;
 use dioxus::prelude::*;
 use dioxus_desktop::{Config, WindowBuilder};
+use themes::Theme;
 
-use crate::diagram::Diagram;
-
-const CSS_BASE: &str = include_str!("styles/base.css");
-const CSS_THEMES: &[&str] = &[
-    include_str!("styles/theme/light.css"),
-    include_str!("styles/theme/dark.css"),
-    include_str!("styles/theme/colored.css"),
-];
+use crate::{
+    diagram::Diagram,
+    themes::{CSS_BASE, CSS_THEMES},
+};
 
 fn main() {
     // test();
@@ -47,16 +45,35 @@ fn App(cx: Scope) -> Element {
         ],
     });
     assert_eq!(output.v_total.len(), output.ph.len());
-    let theme = use_state(cx, || 0usize);
+    let theme = use_state(cx, || &CSS_THEMES[0]);
+    let current_theme = theme.get();
     render! {
         style { CSS_BASE }
-        style { CSS_THEMES[*theme.get()] }
-        button {
-            onclick: move |_| {
-                theme.set((theme.get() + 1) % CSS_THEMES.len());
-            },
-            "☀️"
-        }
+        style { current_theme.sheet }
+        ThemeSelector { theme: theme.clone() }
         Diagram { data: output.clone() }
+    }
+}
+
+#[component]
+fn ThemeSelector(cx: Scope, theme: UseState<&'static Theme<'static>>) -> Element {
+    render! {
+        select {
+            onchange: |ev| {
+                let selected_theme = &ev.inner().value;
+                for css_theme in CSS_THEMES {
+                    if css_theme.id == selected_theme {
+                        theme.set(&css_theme);
+                        break;
+                    }
+                }
+            },
+            for theme in &CSS_THEMES {
+                option {
+                    value: "{theme.id}",
+                    "{theme.icon} {theme.name}"
+                }
+            }
+        }
     }
 }

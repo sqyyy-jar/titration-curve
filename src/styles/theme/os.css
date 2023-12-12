@@ -1,0 +1,84 @@
+@media (prefers-color-scheme: light) {
+    /* Diagram frame */
+    .diagram {
+        background-color: white;
+    }
+
+    /* Diagram background */
+    .diagram-background {}
+
+    /* Line of the diagram grid */
+    .diagram-grid {
+        stroke: #808080;
+    }
+
+    /* Axis of the diagram */
+    .diagram-axis {
+        stroke: black;
+    }
+
+    /* Text in the diagram */
+    .diagram-text {
+        fill: black;
+    }
+
+    /* Numbers on the axis */
+    .diagram-axis-number {
+        fill: black;
+    }
+
+    /* Line in the diagram */
+    .diagram-line {
+        stroke: limegreen;
+    }
+
+    /* Point in the diagram */
+    .diagram-point {
+        fill: blue;
+    }
+}
+
+@media (prefers-color-scheme: dark) {
+    /* Diagram frame */
+    .diagram {
+        background-color: #202020;
+    }
+
+    /* Diagram background */
+    .diagram-background {}
+
+    /* Line of the diagram grid */
+    .diagram-grid {
+        stroke: #808080;
+    }
+
+    /* Axis of the diagram */
+    .diagram-axis {
+        stroke: white;
+    }
+
+    /* Text in the diagram */
+    .diagram-text {
+        fill: white;
+    }
+
+    /* Numbers on the axis */
+    .diagram-axis-number {
+        fill: white;
+    }
+
+    /* Line in the diagram */
+    .diagram-line {
+        stroke: limegreen;
+    }
+
+    /* Line in the diagram */
+    .diagram-line {
+        stroke: limegreen;
+    }
+
+    /* Point in the diagram */
+    .diagram-point {
+        fill: cyan;
+    }
+}

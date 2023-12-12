@@ -1,32 +1,33 @@
 /* Digram frame */
-.diagram {
-    background-color: #202020;
-    /* background: linear-gradient(to top, red, yellow, green); */
-}
+.diagram {}
 
 /* Line of the diagram grid */
 .diagram-grid {
-    stroke: #808080;
     stroke-width: 0.5px;
 }
 
 /* Axis of the diagram */
 .diagram-axis {
     fill: none;
-    stroke: white;
 }
 
 /* Text in the diagram */
 .diagram-text {
-    fill: white;
     font: 13px sans-serif;
 }
 
 /* Numbers on the axis */
 .diagram-axis-number {
-    fill: white;
     font: 10px sans-serif;
     dominant-baseline: middle;
+}
+
+/* Line in the diagram */
+.diagram-line {}
+
+/* Point in the diagram */
+.diagram-point {
+    r: 1px;
 }
 
 /* Text aligned to the right */

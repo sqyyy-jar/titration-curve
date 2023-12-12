@@ -1,0 +1,34 @@
+/* Digram frame */
+.diagram {
+    background: linear-gradient(to top, red, yellow, green);
+}
+
+/* Line of the diagram grid */
+.diagram-grid {
+    stroke: white;
+}
+
+/* Axis of the diagram */
+.diagram-axis {
+    stroke: black;
+}
+
+/* Text in the diagram */
+.diagram-text {
+    fill: black;
+}
+
+/* Numbers on the axis */
+.diagram-axis-number {
+    fill: black;
+}
+
+/* Line in the diagram */
+.diagram-line {
+    stroke: blue;
+}
+
+/* Point in the diagram */
+.diagram-point {
+    fill: cyan;
+}

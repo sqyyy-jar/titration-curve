@@ -9,15 +9,22 @@ use curve::Output;
 use dioxus::prelude::*;
 use dioxus_desktop::{Config, WindowBuilder};
 
+const CSS_BASE: &str = include_str!("styles/base.css");
+const CSS_THEMES: &[&str] = &[
+    include_str!("styles/theme/light.css"),
+    include_str!("styles/theme/dark.css"),
+    include_str!("styles/theme/colored.css"),
+];
+
 fn main() {
-    test();
+    // test();
     dioxus_desktop::launch_cfg(
         App,
         Config::new().with_window(WindowBuilder::new().with_title("Titrationskurve")),
     );
 }
 
-fn test() {
+fn _test() {
     let mut workbook: Xlsx<_> = open_workbook("table.xlsx").unwrap();
     let range = workbook.worksheet_range_at(0).unwrap().unwrap();
     println!("{range:?}");
@@ -37,8 +44,10 @@ fn App(cx: Scope) -> Element {
         ],
     });
     assert_eq!(output.v_total.len(), output.ph.len());
+    let theme = 0;
     render! {
-        style { include_str!("./style.css") }
+        style { CSS_BASE }
+        style { CSS_THEMES[theme] }
         Diagram { data: output.clone() }
     }
 }
@@ -139,7 +148,7 @@ fn DiagramGraph(cx: Scope, data: Rc<Output>, scale: (f64, f64)) -> Element {
         // Draw lines between points
         for (phs, vs) in data.ph.windows(2).zip(data.v_total.windows(2)) {
             line {
-                stroke: "limegreen",
+                class: "diagram-line",
                 x1: DIAGRAM_LEFT + vs[0] * scale.0,
                 y1: DIAGRAM_BOTTOM - phs[0] * scale.1,
                 x2: DIAGRAM_LEFT + vs[1] * scale.0,
@@ -149,10 +158,9 @@ fn DiagramGraph(cx: Scope, data: Rc<Output>, scale: (f64, f64)) -> Element {
         // Points
         for (ph, v) in data.ph.iter().zip(data.v_total.iter()) {
             circle {
-                fill: "cyan",
+                class: "diagram-point",
                 cx: DIAGRAM_LEFT + v * scale.0,
                 cy: DIAGRAM_BOTTOM - ph * scale.1,
-                r: 1,
             }
         }
     }

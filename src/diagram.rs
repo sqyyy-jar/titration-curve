@@ -6,7 +6,7 @@ use crate::curve::Output;
 
 const DIAGRAM_FRAME_WIDTH: f64 = 400.0;
 const DIAGRAM_FRAME_HEIGHT: f64 = 300.0;
-const DIAGRAM_MARGIN: f64 = 50.0;
+const DIAGRAM_MARGIN: f64 = 20.0;
 const DIAGRAM_WIDTH: f64 = DIAGRAM_FRAME_WIDTH - 2.0 * DIAGRAM_MARGIN;
 const DIAGRAM_HEIGHT: f64 = DIAGRAM_FRAME_HEIGHT - 2.0 * DIAGRAM_MARGIN;
 const DIAGRAM_TOP: f64 = DIAGRAM_MARGIN;
@@ -27,8 +27,23 @@ pub fn Diagram(cx: Scope, data: Rc<Output>) -> Element {
     );
     render! {
         svg {
+            display: "none",
+        }
+        svg {
             class: "diagram",
             view_box: "0 0 {DIAGRAM_FRAME_WIDTH} {DIAGRAM_FRAME_HEIGHT}",
+            defs {
+                linearGradient {
+                    id: "ph-gradient",
+                    x1: 0,
+                    y1: 1,
+                    x2: 0,
+                    y2: 0,
+                    stop { stop_color: "red", offset: "0%" }
+                    stop { stop_color: "yellow", offset: "50%" }
+                    stop { stop_color: "green", offset: "100%" }
+                }
+            }
             DiagramFrame { x_steps: x_steps }
             DiagramGraph { data: data.clone(), scale: scale }
         }
@@ -38,6 +53,13 @@ pub fn Diagram(cx: Scope, data: Rc<Output>) -> Element {
 #[component]
 fn DiagramFrame(cx: Scope, x_steps: usize) -> Element {
     render! {
+        rect {
+            class: "diagram-background",
+            x: DIAGRAM_LEFT,
+            y: DIAGRAM_TOP,
+            width: DIAGRAM_WIDTH,
+            height: DIAGRAM_HEIGHT,
+        },
         // y-Axis
         (0..=14).map(|ph| {
             let y = DIAGRAM_BOTTOM - DIAGRAM_HEIGHT / DIAGRAM_X_MAX * ph as f64;
@@ -98,12 +120,17 @@ fn DiagramFrame(cx: Scope, x_steps: usize) -> Element {
             class: "diagram-axis-number anchor-middle", // todo
             x: DIAGRAM_RIGHT + 10.0,
             y: DIAGRAM_TOP + DIAGRAM_HEIGHT / 2.0,
+            // x: DIAGRAM_LEFT - 20.0,
+            // y: DIAGRAM_TOP + DIAGRAM_HEIGHT / 2.0,
+            // transform: "translate({DIAGRAM_LEFT - 20.0}, {DIAGRAM_TOP + DIAGRAM_HEIGHT / 2.0}) rotate(270)",
             "pH"
         }
         text {
             class: "diagram-axis-number anchor-middle", // todo
             x: DIAGRAM_LEFT + DIAGRAM_WIDTH / 2.0,
             y: DIAGRAM_TOP - 10.0,
+            // x: DIAGRAM_LEFT + DIAGRAM_WIDTH / 2.0,
+            // y: DIAGRAM_BOTTOM + 20.0,
             "Volumen"
         }
     }

@@ -1,5 +1,10 @@
-/* Digram frame */
+/* Diagram frame */
 .diagram {}
+
+/* Diagram background */
+.diagram-background {
+    fill: none;
+}
 
 /* Line of the diagram grid */
 .diagram-grid {

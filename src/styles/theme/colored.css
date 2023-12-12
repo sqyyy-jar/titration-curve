@@ -1,6 +1,11 @@
-/* Digram frame */
+/* Diagram frame */
 .diagram {
-    background: linear-gradient(to top, red, yellow, green);
+    /* background: linear-gradient(to top, white 5%, red 5%, yellow 50%, green 95%, white 95%); */
+}
+
+/* Diagram background */
+.diagram-background {
+    fill: url(#ph-gradient);
 }
 
 /* Line of the diagram grid */

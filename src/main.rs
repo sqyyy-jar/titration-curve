@@ -44,10 +44,16 @@ fn App(cx: Scope) -> Element {
         ],
     });
     assert_eq!(output.v_total.len(), output.ph.len());
-    let theme = 0;
+    let theme = use_state(cx, || 0usize);
     render! {
         style { CSS_BASE }
-        style { CSS_THEMES[theme] }
+        style { CSS_THEMES[*theme.get()] }
+        button {
+            onclick: move |_| {
+                theme.set((theme.get() + 1) % CSS_THEMES.len());
+            },
+            "☀️"
+        }
         Diagram { data: output.clone() }
     }
 }

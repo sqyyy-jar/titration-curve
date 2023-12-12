@@ -46,12 +46,14 @@ fn App(cx: Scope) -> Element {
     });
     assert_eq!(output.v_total.len(), output.ph.len());
     let theme = use_state(cx, || &CSS_THEMES[0]);
-    let current_theme = theme.get();
     render! {
         style { CSS_BASE }
-        style { current_theme.sheet }
-        ThemeSelector { theme: theme.clone() }
-        Diagram { data: output.clone() }
+        style { theme.get().sheet }
+        div {
+            class: "main",
+            ThemeSelector { theme: theme.clone() }
+            Diagram { data: output.clone() }
+        }
     }
 }
 
@@ -59,6 +61,7 @@ fn App(cx: Scope) -> Element {
 fn ThemeSelector(cx: Scope, theme: UseState<&'static Theme<'static>>) -> Element {
     render! {
         select {
+            class: "theme-selector",
             onchange: |ev| {
                 let selected_theme = &ev.inner().value;
                 for css_theme in CSS_THEMES {
@@ -70,6 +73,7 @@ fn ThemeSelector(cx: Scope, theme: UseState<&'static Theme<'static>>) -> Element
             },
             for theme in &CSS_THEMES {
                 option {
+                    class: "theme-selector",
                     value: "{theme.id}",
                     "{theme.icon} {theme.name}"
                 }

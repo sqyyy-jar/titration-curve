@@ -1,3 +1,19 @@
+body {
+    padding: 0px;
+    margin: 0px;
+}
+
+/* Main frame */
+.main {
+    padding: 0px;
+    margin: 0px;
+}
+
+/* The theme selector */
+select, option {
+    background: black;
+}
+
 /* Diagram frame */
 .diagram {}
 

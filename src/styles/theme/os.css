@@ -1,4 +1,9 @@
 @media (prefers-color-scheme: light) {
+    /* Main frame */
+    .main {
+        background-color: white;
+    }
+
     /* Diagram frame */
     .diagram {
         background-color: white;
@@ -39,6 +44,11 @@
 }
 
 @media (prefers-color-scheme: dark) {
+    /* Main frame */
+    .main {
+        background-color: #181818;
+    }
+
     /* Diagram frame */
     .diagram {
         background-color: #202020;

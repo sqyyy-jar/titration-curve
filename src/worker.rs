@@ -8,57 +8,7 @@ use std::{
 };
 
 use anyhow::Result;
-
-/// ## Possible states
-///
-/// - Idle
-///   - With file
-///   - Without file
-/// - Busy
-///   - With file
-///   - Without file
-/// - Dead
-///   - Regular (worker was requested to stop)
-///   - By error
-#[derive(Clone, Copy)]
-pub enum State {
-    Idle { with_file: bool },
-    Busy { new_file: bool },
-    Dead { by_error: bool },
-}
-
-impl State {
-    /// Returns if the state is alive.
-    pub fn is_alive(self) -> bool {
-        matches!(self, Self::Idle { .. } | Self::Busy { .. })
-    }
-}
-
-#[derive(Clone, Copy, PartialEq, Eq)]
-pub enum Signal {
-    /// The worker should request a file dialog
-    FileDialog,
-    /// The worker should update the file
-    Update,
-    /// The worker should stop itself
-    Stop,
-}
-
-impl Signal {
-    /// Checks if the signal activates signal-skipping.
-    pub fn is_lock(self) -> bool {
-        matches!(self, Self::FileDialog | Self::Stop)
-    }
-
-    /// Checks if the signal should be skipped with a given lock.
-    pub fn should_skip(self, lock: Self) -> bool {
-        match (lock, self) {
-            (Self::FileDialog, Self::Update) => true,
-            (Self::Stop, _) => true,
-            _ => false,
-        }
-    }
-}
+use notify::{Event, EventKind, Watcher};
 
 /// ## Flow
 ///
@@ -120,33 +70,34 @@ pub struct Worker {
     /// The value in the mutex represents the lock to be used for skipping signals.
     signal_lock: Mutex<Option<Signal>>,
     /// This sender is used to send signals to the worker.
-    signals: Sender<Signal>,
-    result: Mutex<Option<WorkerResult>>,
+    signal_sender: Sender<Signal>,
 }
 
 impl Worker {
-    fn new() -> (Self, Receiver<Signal>) {
-        let (send, receiver) = channel();
+    fn new() -> (Self, Receiver<Signal>, Sender<Response>, Receiver<Response>) {
+        let (signal_sender, signal_receiver) = channel();
+        let (response_sender, response_receiver) = channel();
         (
             Self {
                 state: Mutex::new(State::Idle { with_file: false }),
                 signal_lock: Mutex::default(),
-                signals: send,
-                result: Mutex::new(None),
+                signal_sender,
             },
-            receiver,
+            signal_receiver,
+            response_sender,
+            response_receiver,
         )
     }
 
     /// Spawns a new worker.
-    pub fn spawn() -> Arc<Self> {
-        let (worker, receiver) = Self::new();
+    pub fn spawn() -> (Arc<Self>, Receiver<Response>) {
+        let (worker, signal_receiver, response_sender, response_receiver) = Self::new();
         let worker = Arc::new(worker);
         {
             let worker = worker.clone();
-            thread::spawn(move || worker_impl(worker, receiver));
+            thread::spawn(move || worker_impl(worker, signal_receiver, response_sender));
         }
-        worker
+        (worker, response_receiver)
     }
 
     /// Gets the workers state.
@@ -159,11 +110,24 @@ impl Worker {
         *self.state.lock().unwrap() = state;
     }
 
+    /// Resets the flag introduced by the given signal.
+    pub fn reset_signal_lock(&self, signal: Signal) {
+        let mut lock = self.signal_lock.lock().unwrap();
+        let Some(lock_signal) = *lock else {
+            return;
+        };
+        // Higher locks cannot be unlocked by lower locks.
+        if lock_signal.should_skip(signal) {
+            return;
+        }
+        *lock = None;
+    }
+
     /// Sends a signal to the worker.
     ///
     /// The function ensures that all signals are sent in the correct order.
     ///
-    /// Additionally certain signals may be skipped.
+    /// Additionally certain signals may be skipped, depending on an internal lock.
     pub fn send_signal(&self, signal: Signal) {
         let mut lock = self.signal_lock.lock().unwrap();
         if let Some(lock) = *lock {
@@ -176,26 +140,74 @@ impl Worker {
         if signal.is_lock() {
             *lock = Some(signal);
         }
-        self.signals.send(signal).unwrap();
+        self.signal_sender.send(signal).unwrap();
         drop(lock);
     }
+}
 
-    /// Returns the worker result, if present, and removes it from the worker
-    pub fn result(&self) -> Option<WorkerResult> {
-        self.result.lock().unwrap().take()
+/// ## Possible states
+///
+/// - Idle
+///   - With file
+///   - Without file
+/// - Busy
+///   - With file
+///   - Without file
+/// - Dead
+///   - Regular (worker was requested to stop)
+///   - By error
+#[derive(Clone, Copy)]
+pub enum State {
+    Idle { with_file: bool },
+    Busy { new_file: bool },
+    Dead { by_error: bool },
+}
+
+impl State {
+    /// Returns if the state is alive.
+    pub fn is_alive(self) -> bool {
+        matches!(self, Self::Idle { .. } | Self::Busy { .. })
     }
+}
+
+#[derive(Clone, Copy, PartialEq, Eq)]
+pub enum Signal {
+    /// The worker should request a file dialog.
+    FileDialog,
+    /// The worker should update the file.
+    Update,
+    /// The worker should unload the file and notify the app.
+    Unload,
+    /// The worker should stop itself.
+    Stop,
+}
+
+impl Signal {
+    /// Checks if the signal activates signal-skipping.
+    pub fn is_lock(self) -> bool {
+        matches!(self, Self::FileDialog | Self::Stop)
+    }
+
+    /// Checks if the signal should be skipped with a given lock.
+    pub fn should_skip(self, lock: Self) -> bool {
+        match (lock, self) {
+            (Self::FileDialog, Self::Update) => true,
+            (Self::Stop, _) => true,
+            _ => false,
+        }
+    }
+}
+
+pub enum Response {
+    Output(Arc<Output>),
+    Error(WorkerError),
+}
+
+pub enum WorkerError {
+    WatcherError(Box<notify::Error>),
 }
 
 pub struct Input {}
-
-pub enum WorkerResult {
-    New(Arc<Output>),
-    Update(Arc<Output>),
-    NewError(WorkerError),
-    UpdateError(WorkerError),
-}
-
-pub enum WorkerError {}
 
 pub struct Output {
     pub items: Vec<OutputItem>,
@@ -206,8 +218,12 @@ pub struct OutputItem {
     pub volume: f64,
 }
 
-fn worker_impl(worker: Arc<Worker>, signals: Receiver<Signal>) {
-    let Err(err) = worker_impl_try(worker.clone(), signals) else {
+fn worker_impl(
+    worker: Arc<Worker>,
+    signal_receiver: Receiver<Signal>,
+    response_sender: Sender<Response>,
+) {
+    let Err(err) = worker_impl_try(worker.clone(), signal_receiver, response_sender) else {
         worker.set_state(State::Dead { by_error: false });
         return;
     };
@@ -215,21 +231,48 @@ fn worker_impl(worker: Arc<Worker>, signals: Receiver<Signal>) {
     worker.set_state(State::Dead { by_error: true });
 }
 
-fn worker_impl_try(worker: Arc<Worker>, signals: Receiver<Signal>) -> Result<()> {
-    let mut _watcher = notify::recommended_watcher(|_res| todo!())?;
-    let mut _path: Option<PathBuf> = None;
+fn worker_impl_try(
+    worker: Arc<Worker>,
+    signal_receiver: Receiver<Signal>,
+    response_sender: Sender<Response>,
+) -> Result<()> {
+    let mut watcher = notify::recommended_watcher(move |res| {
+        // huh? rustc, go fix yourself
+        let event: Event = match res {
+            Ok(event) => event,
+            Err(err) => {
+                _ = response_sender.send(Response::Error(WorkerError::WatcherError(Box::new(err))));
+                return;
+            }
+        };
+        if !matches!(event.kind, EventKind::Modify(_) | EventKind::Remove(_)) {
+            return;
+        }
+        todo!("Try to reload file or send unload signal if not present")
+    })?;
+    let mut path: Option<PathBuf> = None;
     // watcher.watch(PathBuf::new().as_path(), RecursiveMode::NonRecursive);
     loop {
-        let signal = signals.recv()?;
+        let signal = signal_receiver.recv()?;
         match signal {
             Signal::FileDialog => {
                 worker.set_state(State::Busy { new_file: true });
-                let file = rfd::FileDialog::new().pick_file();
+                if let Some(file) = rfd::FileDialog::new().pick_file() {
+                    todo!("Implement FileDialog")
+                }
                 worker.set_state(State::Idle { with_file: true });
             }
-            Signal::Update => todo!(),
+            Signal::Update => todo!("Implement Update"),
+            Signal::Unload => {
+                if let Some(path) = &path {
+                    watcher.unwatch(path)?;
+                }
+                path = None;
+                todo!("Implement Unload")
+            }
             Signal::Stop => break,
         }
+        worker.reset_signal_lock(signal);
     }
     Ok(())
 }

@@ -1,9 +1,10 @@
 [package]
-name = "titration-curve"
+name = "titration-curve2"
 version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-calamine = "0.22.1"
-dioxus = "0.4.3"
-dioxus-desktop = "0.4.3"
+anyhow = "1.0.75"
+iced = { git = "https://github.com/iced-rs/iced.git", version = "0.12.0" }
+notify = "6.1.1"
+rfd = "0.12.1"

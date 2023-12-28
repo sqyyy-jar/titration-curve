@@ -13,9 +13,10 @@
         };
 
         naersk' = pkgs.callPackage naersk {};
+
       in rec {
         # For `nix build` & `nix run`:
-        packages.default = naersk'.buildPackage {
+        defaultPackage = naersk'.buildPackage {
           src = ./.;
         };
 
@@ -23,7 +24,21 @@
         devShell = pkgs.mkShell rec {
           nativeBuildInputs = with pkgs; [ rustc cargo rust-analyzer ];
 
-          buildInputs = with pkgs; [ pkg-config glib cairo gtk2 libsoup_3 webkitgtk_4_1 ];
+          buildInputs = with pkgs; [
+            # iced
+            expat
+            fontconfig
+            freetype
+            freetype.dev
+            libGL
+            pkg-config
+            xorg.libX11
+            xorg.libXcursor
+            xorg.libXi
+            xorg.libXrandr
+            # rfd
+            gtk3
+          ];
 
           LD_LIBRARY_PATH = "${pkgs.lib.makeLibraryPath buildInputs}";
         };

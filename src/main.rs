@@ -1,4 +1,7 @@
+#![windows_subsystem = "windows"]
+
 pub mod app;
+pub mod util;
 pub mod worker;
 
 use app::TitrationCurve;

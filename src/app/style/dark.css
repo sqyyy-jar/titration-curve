@@ -1,0 +1,38 @@
+.grid {
+    stroke: #808080;
+    stroke-width: 0.5px;
+}
+
+.axis {
+    fill: none;
+    stroke: white;
+}
+
+.text {
+    fill: white;
+    font: 10px sans-serif;
+    dominant-baseline: middle;
+}
+
+.axis-number {
+    fill: white;
+    font: 10px sans-serif;
+    dominant-baseline: middle;
+}
+
+.graph-line {
+    stroke: limegreen;
+}
+
+.graph-point {
+    fill: cyan;
+    r: 1px;
+}
+
+.anchor-end {
+    text-anchor: end;
+}
+
+.anchor-middle {
+    text-anchor: middle;
+}

@@ -6,6 +6,7 @@ use std::{
         Arc, Mutex,
     },
     thread,
+    time::Duration,
 };
 
 use anyhow::Result;
@@ -13,25 +14,6 @@ use calamine::Reader;
 use notify::{Event, EventKind, RecursiveMode, Watcher};
 use rfd::FileDialog;
 
-/// ## Flow
-///
-/// ```text
-/// App --> Worker
-///   signal(file_dialog)
-///   signal(stop)
-///
-/// App <-- Worker
-///   state
-///   result
-///
-/// Worker --> Notify
-///   watch
-///   unwatch
-///
-/// Worker <-- Notify
-///   signal(update)
-/// ```
-///
 /// ## Signals
 ///
 /// Signals are sent to the worker through a channel. They are processed in the order they were sent
@@ -137,7 +119,6 @@ impl Worker {
 
     /// Sends a response to the app.
     pub fn send_response(&self, response: Response) {
-        dbg!("Response");
         _ = self.response_sender.send(response);
     }
 }
@@ -187,7 +168,6 @@ pub enum Response {
 
 #[derive(Debug)]
 pub enum WorkerError {
-    // WatcherError(Box<notify::Error>),
     FileDoesNotExist,
     TableError(calamine::Error),
     NoTableInWorkbook,
@@ -205,30 +185,32 @@ fn worker_impl(worker: Arc<Worker>, signal_receiver: Receiver<Signal>) {
         eprintln!("[worker] The worker crashed: {err}");
     }
     worker.set_alive(false);
+    eprintln!("[worker] The worker shut down");
 }
 
 fn worker_impl_try(worker: Arc<Worker>, signal_receiver: Receiver<Signal>) -> Result<()> {
     let mut path: Option<PathBuf> = None;
     let mut watcher = {
         let worker = worker.clone();
-        notify::recommended_watcher(move |res| {
-            // huh? rustc, go fix yourself
-            let event: Event = match res {
-                Ok(event) => event,
-                Err(err) => {
-                    eprintln!("[watcher] There was an error during the event stream: {err}");
-                    return;
+        // INotifyWatcher does not work
+        notify::PollWatcher::new(
+            move |res| {
+                let event: Event = match res {
+                    Ok(event) => event,
+                    Err(err) => {
+                        eprintln!("[watcher] There was an error during the event stream: {err}");
+                        return;
+                    }
+                };
+                if matches!(event.kind, EventKind::Modify(_) | EventKind::Remove(_)) {
+                    worker.send_signal(Signal::Update);
                 }
-            };
-            if true || matches!(event.kind, EventKind::Modify(_) | EventKind::Remove(_)) {
-                dbg!("Update");
-                worker.send_signal(Signal::Update);
-            }
-        })?
+            },
+            notify::Config::default().with_poll_interval(Duration::from_millis(500)),
+        )?
     };
     loop {
         let signal = signal_receiver.recv()?;
-        dbg!("Signal");
         match signal {
             Signal::FileDialog => 'blk: {
                 let Some(file) = FileDialog::new()

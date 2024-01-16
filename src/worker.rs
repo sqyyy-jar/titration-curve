@@ -279,7 +279,7 @@ impl Input {
                 current.n1 = if let Some(OutputItem { n1, .. }) = &last {
                     n1 - current.n2
                 } else {
-                    0.001
+                    0.001 // todo - remove magic numbers
                 };
                 current.c1 = current.n1 / (current.total_v / 1000.0);
                 current.c2 = f32::NAN;
@@ -292,8 +292,7 @@ impl Input {
                     last_m_v = m_v;
                     continue;
                 } // Wrong - v = 10.0 is errornous and just gets skipped
-            }
-            if second_half {
+            } else {
                 current.n1 = f32::NAN;
                 current.n2 = if let Some(OutputItem {
                     m_v: l_m_v,

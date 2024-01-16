@@ -262,25 +262,58 @@ pub struct Input {
 impl Input {
     pub fn calculate_output(&self) -> Output {
         let mut items = Vec::new();
-        // todo
+        let mut last: Option<OutputItem> = None;
+        let mut current = OutputItem::default();
+        let mut second_half = false;
+        let mut last_m_v = 0.0;
         for &m_v in &self.m_v {
-            let total_v = m_v + 10.0;
-            let n1 = 0.001;
-            let n2 = m_v / 1000.0 * self.m_c;
-            let c1 = n1 / (total_v / 1000.0);
-            let c2 = 0.0;
-            let ph = -c1.log10();
-            let poh = 14.0 - ph;
-            items.push(OutputItem {
-                m_v,
-                ph,
-                total_v,
-                n1,
-                n2,
-                c1,
-                c2,
-                poh,
-            });
+            current.m_v = m_v;
+            current.total_v = m_v + self.t_v * 1000.0;
+            if !second_half {
+                current.n2 = if let Some(OutputItem { m_v: l_m_v, .. }) = &last {
+                    let diff = m_v - l_m_v;
+                    self.m_c / 1000.0 * diff
+                } else {
+                    m_v / 1000.0 * self.m_c
+                };
+                current.n1 = if let Some(OutputItem { n1, .. }) = &last {
+                    n1 - current.n2
+                } else {
+                    0.001
+                };
+                current.c1 = current.n1 / (current.total_v / 1000.0);
+                current.c2 = f32::NAN;
+                current.ph = -current.c1.log10();
+                current.poh = 14.0 - current.ph;
+                if !current.ph.is_finite() || current.ph > 14.0 {
+                    println!("first: {current:#?}");
+                    last = None;
+                    second_half = true;
+                    last_m_v = m_v;
+                    continue;
+                } // Wrong - v = 10.0 is errornous and just gets skipped
+            }
+            if second_half {
+                current.n1 = f32::NAN;
+                current.n2 = if let Some(OutputItem {
+                    m_v: l_m_v,
+                    n2: l_n2,
+                    ..
+                }) = &last
+                {
+                    let diff = m_v - l_m_v;
+                    l_n2 + m_v / 1000.0 * diff * self.m_c
+                } else {
+                    let diff = m_v - last_m_v;
+                    m_v / 1000.0 * diff * self.m_c
+                };
+                current.c1 = f32::NAN;
+                current.c2 = current.n2 / (current.total_v / 1000.0);
+                current.poh = -current.c2.log10();
+                current.ph = 14.0 - current.poh;
+            }
+            items.push(current.clone());
+            last = Some(current.clone());
         }
         Output { items }
     }
@@ -301,7 +334,7 @@ impl Output {
     }
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug, Default)]
 pub struct OutputItem {
     pub m_v: f32,
     pub ph: f32,
@@ -387,7 +420,7 @@ fn load_file(worker: &Worker, path: &PathBuf) {
         };
         m_v.push(cell as f32);
     }
-    // todo
+    // todo - acid and base support
     let input = Input {
         t_v: t_v as f32,
         t_c: t_c as f32,
